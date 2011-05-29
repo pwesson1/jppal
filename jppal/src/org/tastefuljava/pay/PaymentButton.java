@@ -182,6 +182,14 @@ public class PaymentButton {
         this.country = country;
     }
 
+    public String getBaseURL() {
+        return service.getBaseURL();
+    }
+
+    public String getEncrypted() {
+        return service.encrypt(this);
+    }
+
     public String getHtml() {
         StringWriter out = new StringWriter();
         service.renderButton(this, out);

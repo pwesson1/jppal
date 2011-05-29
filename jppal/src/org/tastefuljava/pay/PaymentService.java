@@ -47,7 +47,6 @@ import org.bouncycastle.util.encoders.Base64;
 public class PaymentService {
     private static final Logger LOG
             = Logger.getLogger(PaymentService.class.getName());
-    private static final String PROP_FILE_NAME = "paypal.properties";
     private static final Map<String,String> PAYPAL_LANGUAGES;
     private static final String PDT_PATH = "/cgi-bin/webscr";
     private static final String IPN_PATH = "/cgi-bin/webscr";
@@ -55,6 +54,7 @@ public class PaymentService {
             = Pattern.compile("^[a-zA-Z_0-9+-]+/[a-zA-Z_0-9+-]+\\s*"
                 + "(?:;\\s*charset=([a-zA-Z_0-9+-]+))$");
 
+    private URL confURL;
     private String baseURL;
     private String business;
     private String certId;
@@ -65,12 +65,14 @@ public class PaymentService {
     private int connectTimeout;
     private int readTimeout;
 
-    public static PaymentService getInstance() throws IOException {
-        return new PaymentService(loadProps());
+    public static PaymentService newInstance(URL confURL) throws IOException {
+        return new PaymentService(confURL);
     }
 
-    private PaymentService(Properties props) throws IOException {
+    private PaymentService(URL confURL) throws IOException {
         try {
+            this.confURL = confURL;
+            Properties props = loadProps(confURL);
             baseURL = props.getProperty("base-url");
             business = props.getProperty("business");
             certId = props.getProperty("cert-id");
@@ -108,8 +110,25 @@ public class PaymentService {
         }
     }
 
+    public String getBaseURL() {
+        return baseURL;
+    }
+
     public PaymentButton createButton() {
         return new PaymentButton(this);
+    }
+
+    public String encrypt(PaymentButton button) {
+        try {
+            String params = buttonParams(button);
+            return encrypt(params.getBytes("UTF-8"));
+        } catch (IOException ex) {
+            LOG.log(Level.SEVERE, null, ex);
+            throw new RuntimeException(ex.getMessage());
+        } catch (GeneralSecurityException ex) {
+            LOG.log(Level.SEVERE, null, ex);
+            throw new RuntimeException(ex.getMessage());
+        }
     }
 
     public PaymentInfo getPaymentInfo(String txid) throws IOException {
@@ -263,8 +282,7 @@ public class PaymentService {
 
     void renderButton(PaymentButton button, Writer out) {
         try {
-            String params = buttonParams(button);
-            String encrypted = encrypt(params.getBytes("UTF-8"));
+            String encrypted = encrypt(button);
             VelocityContext context = new VelocityContext();
             context.put("button", button);
             context.put("baseURL", baseURL);
@@ -315,58 +333,19 @@ public class PaymentService {
         }
     }
 
-    private static Properties loadProps() throws IOException {
+    private static Properties loadProps(URL url) throws IOException {
         Properties props = new Properties();
-        loadDefaultProps(props);
-        URL url = getConfResource(PROP_FILE_NAME);
-        if (url != null) {
-            InputStream in = url.openStream();
-            try {
-                props.load(in);
-            } finally {
-                in.close();
-            }
-        }
-        return props;
-    }
-
-    private static void loadDefaultProps(Properties props) throws IOException {
-        Class thisClass = PaymentService.class;
-        InputStream in = getClassPathResource(PROP_FILE_NAME).openStream();
+        InputStream in = url.openStream();
         try {
             props.load(in);
         } finally {
             in.close();
         }
+        return props;
     }
 
-    private static URL getResource(String fileName) throws IOException {
-        URL url = getConfResource(fileName);
-        if (url == null) {
-            url = getClassPathResource(fileName);
-        }
-        return url;
-    }
-
-    private static URL getConfResource(String fileName) throws IOException {
-        String base = System.getProperty("catalina.base");
-        if (base == null) {
-            return null;
-        }
-        File dir = new File(base, "conf");
-        if (!dir.isDirectory()) {
-            return null;
-        }
-        File file = new File(dir, PROP_FILE_NAME);
-        if (!file.isFile() || !file.canRead()) {
-            return null;
-        }
-        return file.toURI().toURL();
-    }
-
-    private static URL getClassPathResource(String fileName) {
-        Class thisClass = PaymentService.class;
-        return thisClass.getResource(fileName);
+    private URL getResource(String fileName) throws IOException {
+        return new URL(confURL, fileName);
     }
 
     private static String getPackagePath() {

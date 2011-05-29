@@ -4,6 +4,14 @@
         <description>ServletContextListener</description>
         <listener-class>org.tastefuljava.jppal.example.ContextListener</listener-class>
     </listener>
+    <servlet>
+        <servlet-name>ButtonBuilderServlet</servlet-name>
+        <servlet-class>org.tastefuljava.jppal.example.ButtonBuilderServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ButtonBuilderServlet</servlet-name>
+        <url-pattern>/build</url-pattern>
+    </servlet-mapping>
     <session-config>
         <session-timeout>
             30

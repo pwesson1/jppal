@@ -2,7 +2,6 @@ package org.tastefuljava.pay;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -41,8 +40,17 @@ import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.cms.CMSProcessableByteArray;
 import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.cms.CMSSignedDataGenerator;
+import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder;
+import org.bouncycastle.cms.jcajce.JceKeyTransRecipientInfoGenerator;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
+import org.bouncycastle.util.CollectionStore;
+import org.bouncycastle.util.Store;
 import org.bouncycastle.util.encoders.Base64;
+import sun.security.provider.certpath.CollectionCertStore;
 
 public class PaymentService {
     private static final Logger LOG
@@ -122,6 +130,9 @@ public class PaymentService {
         try {
             String params = buttonParams(button);
             return encrypt(params.getBytes("UTF-8"));
+        } catch (OperatorCreationException ex) {
+            LOG.log(Level.SEVERE, null, ex);
+            throw new RuntimeException(ex.getMessage());
         } catch (IOException ex) {
             LOG.log(Level.SEVERE, null, ex);
             throw new RuntimeException(ex.getMessage());
@@ -305,22 +316,33 @@ public class PaymentService {
     }
 
     private String encrypt(byte[] data)
-            throws IOException, GeneralSecurityException {
+            throws IOException, GeneralSecurityException, OperatorCreationException {
         try {
+            JcaContentSignerBuilder builder
+                    = new JcaContentSignerBuilder("SHA1withRSA");
+            builder.setProvider("BC");
+            ContentSigner sha1Signer = builder.build(ownKey);
             CMSSignedDataGenerator sg = new CMSSignedDataGenerator();
-            sg.addSigner(ownKey, ownCert, CMSSignedDataGenerator.DIGEST_SHA1);
+            JcaDigestCalculatorProviderBuilder dcpbuilder
+                    = new JcaDigestCalculatorProviderBuilder();
+            dcpbuilder.setProvider("BC");
+            JcaSignerInfoGeneratorBuilder sigbuilder
+                    = new JcaSignerInfoGeneratorBuilder(dcpbuilder.build());
+            sg.addSignerInfoGenerator(sigbuilder.build(sha1Signer, ownCert));
             ArrayList<X509Certificate> certs = new ArrayList<X509Certificate>();
             certs.add(ownCert);
-            CertStore certStore = CertStore.getInstance("Collection",
-                    new CollectionCertStoreParameters(certs));
-            sg.addCertificatesAndCRLs(certStore);
+            Store certStore = new CollectionStore(certs);
+            sg.addCertificates(certStore);
             CMSProcessableByteArray cmsba = new CMSProcessableByteArray(data);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             cmsba.write(baos);
             CMSSignedData signedData = sg.generate(cmsba, true, "BC");
             byte[] signed = signedData.getEncoded();
             CMSEnvelopedDataGenerator eg = new CMSEnvelopedDataGenerator();
-            eg.addKeyTransRecipient(paypalCert);
+            JceKeyTransRecipientInfoGenerator trig
+                    = new JceKeyTransRecipientInfoGenerator(paypalCert);
+            trig.setProvider("BC");
+            eg.addRecipientInfoGenerator(trig);
             CMSEnvelopedData envData = eg.generate(
                     new CMSProcessableByteArray(signed),
                     CMSEnvelopedDataGenerator.DES_EDE3_CBC, "BC");

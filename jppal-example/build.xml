@@ -70,7 +70,7 @@
 
     -->
     <target name="zip-src" depends="dist">
-        <zip destfile="dist/jppal-example-${jppal-version}-src.zip">
+        <zip destfile="dist/jppal-example-${jppal-version}.zip">
             <zipfileset dir="." prefix="jppal-example-${jppal-version}"
                     excludes="build/**,dist/**,nbproject/private/**"/>
             <zipfileset dir="dist" prefix="jppal-example-${jppal-version}"

@@ -12,7 +12,7 @@
         <h1>Button parameters</h1>
         <form method="POST" action="build">
             <dl>
-                <c:forTokens var="prop" delims=";" items="language;label;customerId;itemCode;itemLabel;price;currency;returnUrl;cancelUrl;notifyUrl;email;firstName;lastName;address1;address2;zip;city;state;country">
+                <c:forTokens var="prop" delims=";" items="language;label;customerId;itemCode;itemLabel;price;currency;email;firstName;lastName;address1;address2;zip;city;state;country">
                     <dt>${prop}</dt>
                     <dd><input type="text" name="${prop}" value="${button[prop]}"></dd>
                 </c:forTokens>

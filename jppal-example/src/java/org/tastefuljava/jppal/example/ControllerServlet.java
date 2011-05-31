@@ -1,8 +1,6 @@
 package org.tastefuljava.jppal.example;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import javax.servlet.RequestDispatcher;
@@ -20,8 +18,7 @@ public class ControllerServlet extends HttpServlet {
 
     protected void processRequest(HttpServletRequest request,
             HttpServletResponse response) throws ServletException, IOException {
-        PaymentService service = getService();
-        PaymentButton button = getButton(request, service);
+        PaymentButton button = getButton(request);
         String path = request.getServletPath();
         if (path.equals("/start")) {
             RequestDispatcher disp = request.getRequestDispatcher("/index.jsp");
@@ -42,6 +39,7 @@ public class ControllerServlet extends HttpServlet {
             disp.forward(request, response);
         } else if (path.equals("/notify")) {
             Map<String,String> attrs = getParameters(request);
+            PaymentService service = getService();
             service.processNotification(attrs);
         }
     }
@@ -75,6 +73,10 @@ public class ControllerServlet extends HttpServlet {
     }
 
     private void populateButton(HttpServletRequest request, PaymentButton button) {
+        String base = baseURL(request);
+        button.setReturnUrl(base + "/return");
+        button.setCancelUrl(base + "/cancel");
+        button.setNotifyUrl(base + "/notify");
         button.setLanguage(request.getParameter("language"));
         button.setLabel(request.getParameter("label"));
         button.setCustomerId(request.getParameter("customerId"));
@@ -82,9 +84,6 @@ public class ControllerServlet extends HttpServlet {
         button.setItemLabel(request.getParameter("itemLabel"));
         button.setPrice(Util.parseDecimal(request.getParameter("price")));
         button.setCurrency(request.getParameter("currency"));
-        button.setReturnUrl(request.getParameter("returnUrl"));
-        button.setCancelUrl(request.getParameter("cancelUrl"));
-        button.setNotifyUrl(request.getParameter("notifyUrl"));
         button.setEmail(request.getParameter("email"));
         button.setFirstName(request.getParameter("firstName"));
         button.setLastName(request.getParameter("lastName"));
@@ -98,31 +97,12 @@ public class ControllerServlet extends HttpServlet {
 
     private PaymentService getService() throws IOException {
         ServletContext context = getServletContext();
-        PaymentService service
-                = (PaymentService)context.getAttribute("service");
-        if (service == null) {
-            File dir = new File(System.getProperty("catalina.base"), "conf");
-            File file = new File(dir, "myppal.properties");
-            URL url = file.toURI().toURL();
-            service = PaymentService.newInstance(url);
-            context.setAttribute("service", service);
-        }
-        return service;
+        return (PaymentService)context.getAttribute("service");
     }
 
-    private PaymentButton getButton(HttpServletRequest request,
-            PaymentService service) {
+    private PaymentButton getButton(HttpServletRequest request) {
         HttpSession session = request.getSession();
-        PaymentButton button = (PaymentButton)session.getAttribute("button");
-        if (button == null) {
-            String base = baseURL(request);
-            button = service.createButton();
-            button.setReturnUrl(base + "/return");
-            button.setCancelUrl(base + "/cancel");
-            button.setNotifyUrl(base + "/notify");
-            session.setAttribute("button", button);
-        }
-        return button;
+        return (PaymentButton)session.getAttribute("button");
     }
 
     private String baseURL(HttpServletRequest request) {

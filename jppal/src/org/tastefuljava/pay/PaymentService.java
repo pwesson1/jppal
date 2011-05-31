@@ -140,7 +140,7 @@ public class PaymentService {
         }
     }
 
-    public PaymentInfo getPaymentInfo(String txid) throws IOException {
+    public Map<String,String> getPaymentInfo(String txid) throws IOException {
         URL uploadUrl = new URL(baseURL + PDT_PATH);
         HttpURLConnection con = (HttpURLConnection)uploadUrl.openConnection();
         try {
@@ -199,7 +199,7 @@ public class PaymentService {
                     LOG.log(Level.FINE, "    {0}={1}", new Object[]{name, val});
                     attrs.put(name, val);
                 }
-                return createPaymentInfo(attrs);
+                return attrs;
             } finally {
                 stream.close();
             }
@@ -208,15 +208,7 @@ public class PaymentService {
         }
     }
 
-    public PaymentInfo createPaymentInfo(Map<String,String> attrs) {
-        PaymentInfo pi = new PaymentInfo();
-        for (Map.Entry<String,String> entry: attrs.entrySet()) {
-            putInfo(pi, entry.getKey(), entry.getValue());
-        }
-        return pi;
-    }
-
-    public PaymentInfo processNotification(Map<String,String> attrs)
+    public void processNotification(Map<String,String> attrs)
             throws IOException {
         StringBuilder buf = new StringBuilder("cmd=_notify-validate");
         for (Map.Entry<String,String> entry: attrs.entrySet()) {
@@ -255,35 +247,12 @@ public class PaymentService {
             } finally {
                 in.close();
             }
-            if (res.equals("VERIFIED")) {
-                return createPaymentInfo(attrs);
-            } else {
+            if (!res.equals("VERIFIED")) {
                 throw new IOException("Payment verification failed");
             }
         } finally {
             con.disconnect();
         }
-    }
-
-    private void putInfo(PaymentInfo pi, String name, String val) {
-        if ("txn_id".equals(name)) {
-            pi.setTransactionId(val);
-        } else if ("payment_date".equals(name)) {
-            pi.setDate(Util.parseDateTime(val, "HH:mm:ss MMM dd, yyyy z"));
-        } else if ("custom".equals(name)) {
-            pi.setCustomerId(val);
-        } else if ("item_number".equals(name)) {
-            pi.setItemCode(val);
-        } else if ("mc_gross".equals(name)) {
-            pi.setPrice(Util.parseDecimal(val));
-        } else if ("mc_currency".equals(name)) {
-            pi.setCurrency(val);
-        }
-        String s = pi.getDetails();
-        if (s == null) {
-            s = "";
-        }
-        pi.setDetails(s + name + '=' + val + '\n');
     }
 
     void renderButton(PaymentButton button, Writer out) {

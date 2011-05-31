@@ -13,7 +13,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import org.tastefuljava.pay.PaymentButton;
-import org.tastefuljava.pay.PaymentInfo;
 import org.tastefuljava.pay.PaymentService;
 import org.tastefuljava.pay.Util;
 
@@ -43,7 +42,7 @@ public class ControllerServlet extends HttpServlet {
                 String value = request.getParameter(name);
                 attrs.put(name, value);
             }
-            PaymentInfo info = service.processNotification(attrs);
+            service.processNotification(attrs);
         }
     }
 

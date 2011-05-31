@@ -32,6 +32,8 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.bouncycastle.cms.CMSEnvelopedData;
 import org.bouncycastle.cms.CMSEnvelopedDataGenerator;
 import org.bouncycastle.cms.CMSException;
@@ -326,8 +328,8 @@ public class PaymentService {
             JcaSignerInfoGeneratorBuilder sigbuilder
                     = new JcaSignerInfoGeneratorBuilder(dcpbuilder.build());
             sg.addSignerInfoGenerator(sigbuilder.build(sha1Signer, ownCert));
-            ArrayList<X509Certificate> certs = new ArrayList<X509Certificate>();
-            certs.add(ownCert);
+            ArrayList<X509CertificateHolder> certs = new ArrayList<X509CertificateHolder>();
+            certs.add(new JcaX509CertificateHolder(ownCert));
             Store certStore = new CollectionStore(certs);
             sg.addCertificates(certStore);
             CMSProcessableByteArray cmsba = new CMSProcessableByteArray(data);

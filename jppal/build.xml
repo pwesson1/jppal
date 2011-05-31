@@ -10,7 +10,7 @@
 <project name="jppal" default="default" basedir=".">
     <description>Builds, tests, and runs the project jppal.</description>
     <import file="nbproject/build-impl.xml"/>
-    <property name="jppal-version" value="0.05"/>
+    <property name="jppal-version" value="0.06"/>
 
     <!--
 

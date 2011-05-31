@@ -6,11 +6,12 @@
     </listener>
     <servlet>
         <servlet-name>ButtonBuilderServlet</servlet-name>
-        <servlet-class>org.tastefuljava.jppal.example.ButtonBuilderServlet</servlet-class>
+        <servlet-class>org.tastefuljava.jppal.example.ControllerServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>ButtonBuilderServlet</servlet-name>
         <url-pattern>/build</url-pattern>
+        <url-pattern>/start</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>
@@ -18,6 +19,6 @@
         </session-timeout>
     </session-config>
     <welcome-file-list>
-        <welcome-file>index.jsp</welcome-file>
+        <welcome-file>start</welcome-file>
     </welcome-file-list>
 </web-app>

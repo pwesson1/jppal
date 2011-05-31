@@ -2,15 +2,18 @@ package org.tastefuljava.jppal.example;
 
 import java.io.File;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import org.tastefuljava.pay.PaymentButton;
+import org.tastefuljava.pay.PaymentInfo;
 import org.tastefuljava.pay.PaymentService;
 import org.tastefuljava.pay.Util;
 
@@ -19,9 +22,10 @@ public class ControllerServlet extends HttpServlet {
     protected void processRequest(HttpServletRequest request,
             HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession();
+        PaymentService service = getService();
         PaymentButton button = (PaymentButton)session.getAttribute("button");
         if (button == null) {
-            button = createButton();
+            button = service.createButton();
             session.setAttribute("button", button);
         }
         String path = request.getServletPath();
@@ -32,6 +36,14 @@ public class ControllerServlet extends HttpServlet {
             populateButton(request, button);
             RequestDispatcher disp = request.getRequestDispatcher("/button.jsp");
             disp.forward(request, response);
+        } else if (path.equals("/notify")) {
+            Map<String,String> attrs = new HashMap<String,String>();
+            for (Object obj: request.getParameterMap().keySet()) {
+                String name = (String)obj;
+                String value = request.getParameter(name);
+                attrs.put(name, value);
+            }
+            PaymentInfo info = service.processNotification(attrs);
         }
     }
 
@@ -53,14 +65,6 @@ public class ControllerServlet extends HttpServlet {
         return "Button builder";
     }// </editor-fold>
 
-    private PaymentButton createButton() throws IOException {
-        File dir = new File(System.getProperty("catalina.base"), "conf");
-        File file = new File(dir, "myppal.properties");
-        URL url = file.toURI().toURL();
-        PaymentService service = PaymentService.newInstance(url);
-        return service.createButton();
-    }
-
     private void populateButton(HttpServletRequest request, PaymentButton button) {
         button.setLanguage(request.getParameter("language"));
         button.setLabel(request.getParameter("label"));
@@ -81,5 +85,19 @@ public class ControllerServlet extends HttpServlet {
         button.setCity(request.getParameter("city"));
         button.setState(request.getParameter("state"));
         button.setCountry(request.getParameter("country"));
+    }
+
+    private PaymentService getService() throws IOException {
+        ServletContext context = getServletContext();
+        PaymentService service
+                = (PaymentService)context.getAttribute("service");
+        if (service == null) {
+            File dir = new File(System.getProperty("catalina.base"), "conf");
+            File file = new File(dir, "myppal.properties");
+            URL url = file.toURI().toURL();
+            service = PaymentService.newInstance(url);
+            context.setAttribute("service", service);
+        }
+        return service;
     }
 }

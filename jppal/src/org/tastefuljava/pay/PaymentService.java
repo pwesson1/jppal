@@ -29,7 +29,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.servlet.http.HttpServletRequest;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.bouncycastle.cert.X509CertificateHolder;
@@ -217,17 +216,14 @@ public class PaymentService {
         return pi;
     }
 
-    public PaymentInfo processNotification(HttpServletRequest req)
+    public PaymentInfo processNotification(Map<String,String> attrs)
             throws IOException {
-        Map<String,String> attrs = new HashMap<String,String>();
         StringBuilder buf = new StringBuilder("cmd=_notify-validate");
-        for (String name: req.getParameterMap().keySet()) {
-            String value = req.getParameter(name);
-            attrs.put(name, value);
+        for (Map.Entry<String,String> entry: attrs.entrySet()) {
             buf.append('&');
-            buf.append(name);
+            buf.append(entry.getKey());
             buf.append('=');
-            buf.append(URLEncoder.encode(value, "UTF-8"));
+            buf.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
         }
         byte[] content = buf.toString().getBytes("UTF-8");
         URL uploadUrl = new URL(baseURL + PDT_PATH);

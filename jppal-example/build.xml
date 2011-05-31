@@ -10,6 +10,7 @@
 <project name="jppal-example" default="default" basedir=".">
     <description>Builds, tests, and runs the project jppal-example.</description>
     <import file="nbproject/build-impl.xml"/>
+    <property name="jppal-version" value="0.06"/>
     <!--
 
     There exist several targets which are by default empty and which can be 
@@ -68,4 +69,12 @@
     nbproject/build-impl.xml file. 
 
     -->
+    <target name="zip-src" depends="dist">
+        <zip destfile="dist/jppal-example-${jppal-version}-src.zip">
+            <zipfileset dir="." prefix="jppal-example-${jppal-version}"
+                    excludes="build/**,dist/**,nbproject/private/**"/>
+            <zipfileset dir="dist" prefix="jppal-example-${jppal-version}"
+                    includes="jppal-example.war"/>
+        </zip>
+    </target>
 </project>

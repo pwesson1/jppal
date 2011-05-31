@@ -12,6 +12,9 @@
         <servlet-name>ButtonBuilderServlet</servlet-name>
         <url-pattern>/build</url-pattern>
         <url-pattern>/start</url-pattern>
+        <url-pattern>/return</url-pattern>
+        <url-pattern>/cancel</url-pattern>
+        <url-pattern>/notify</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>

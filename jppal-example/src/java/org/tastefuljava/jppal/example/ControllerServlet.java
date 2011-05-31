@@ -20,13 +20,8 @@ public class ControllerServlet extends HttpServlet {
 
     protected void processRequest(HttpServletRequest request,
             HttpServletResponse response) throws ServletException, IOException {
-        HttpSession session = request.getSession();
         PaymentService service = getService();
-        PaymentButton button = (PaymentButton)session.getAttribute("button");
-        if (button == null) {
-            button = service.createButton();
-            session.setAttribute("button", button);
-        }
+        PaymentButton button = getButton(request, service);
         String path = request.getServletPath();
         if (path.equals("/start")) {
             RequestDispatcher disp = request.getRequestDispatcher("/index.jsp");
@@ -35,13 +30,18 @@ public class ControllerServlet extends HttpServlet {
             populateButton(request, button);
             RequestDispatcher disp = request.getRequestDispatcher("/button.jsp");
             disp.forward(request, response);
+        } else if (path.equals("/return")) {
+            Map<String,String> attrs = getParameters(request);
+            request.setAttribute("payment", attrs);
+            RequestDispatcher disp = request.getRequestDispatcher("/return.jsp");
+            disp.forward(request, response);
+        } else if (path.equals("/cancel")) {
+            Map<String,String> attrs = getParameters(request);
+            request.setAttribute("payment", attrs);
+            RequestDispatcher disp = request.getRequestDispatcher("/cancel.jsp");
+            disp.forward(request, response);
         } else if (path.equals("/notify")) {
-            Map<String,String> attrs = new HashMap<String,String>();
-            for (Object obj: request.getParameterMap().keySet()) {
-                String name = (String)obj;
-                String value = request.getParameter(name);
-                attrs.put(name, value);
-            }
+            Map<String,String> attrs = getParameters(request);
             service.processNotification(attrs);
         }
     }
@@ -63,6 +63,16 @@ public class ControllerServlet extends HttpServlet {
     public String getServletInfo() {
         return "Button builder";
     }// </editor-fold>
+
+    private Map<String,String> getParameters(HttpServletRequest request) {
+        Map<String,String> attrs = new HashMap<String,String>();
+        for (Object obj: request.getParameterMap().keySet()) {
+            String name = (String)obj;
+            String value = request.getParameter(name);
+            attrs.put(name, value);
+        }
+        return attrs;
+    }
 
     private void populateButton(HttpServletRequest request, PaymentButton button) {
         button.setLanguage(request.getParameter("language"));
@@ -98,5 +108,46 @@ public class ControllerServlet extends HttpServlet {
             context.setAttribute("service", service);
         }
         return service;
+    }
+
+    private PaymentButton getButton(HttpServletRequest request,
+            PaymentService service) {
+        HttpSession session = request.getSession();
+        PaymentButton button = (PaymentButton)session.getAttribute("button");
+        if (button == null) {
+            String base = baseURL(request);
+            button = service.createButton();
+            button.setReturnUrl(base + "/return");
+            button.setCancelUrl(base + "/cancel");
+            button.setNotifyUrl(base + "/notify");
+            session.setAttribute("button", button);
+        }
+        return button;
+    }
+
+    private String baseURL(HttpServletRequest request) {
+        String scheme = request.getScheme();
+        String host = request.getServerName();
+        int port = request.getServerPort();
+        StringBuilder buf = new StringBuilder();
+        buf.append(scheme);
+        buf.append("://");
+        buf.append(host);
+        if (port != defaultPort(scheme)) {
+            buf.append(":");
+            buf.append(port);
+        }
+        buf.append(request.getContextPath());
+        return buf.toString();
+    }
+
+    private int defaultPort(String scheme) {
+        if (scheme.equals("http")) {
+            return 80;
+        } else if (scheme.equals("https")) {
+            return 443;
+        } else {
+            return -1;
+        }
     }
 }

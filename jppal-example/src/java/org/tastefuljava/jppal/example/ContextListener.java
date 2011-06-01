@@ -11,7 +11,7 @@ import javax.servlet.ServletContextListener;
 import org.tastefuljava.pay.PaymentService;
 
 public class ContextListener implements ServletContextListener {
-    private static Logger LOG
+    private static final Logger LOG
             = Logger.getLogger(ContextListener.class.getName());
 
     public void contextInitialized(ServletContextEvent sce) {

@@ -18,13 +18,12 @@ public class ControllerServlet extends HttpServlet {
 
     protected void processRequest(HttpServletRequest request,
             HttpServletResponse response) throws ServletException, IOException {
-        PaymentButton button = getButton(request);
         String path = request.getServletPath();
         if (path.equals("/start")) {
             RequestDispatcher disp = request.getRequestDispatcher("/index.jsp");
             disp.forward(request, response);
         } else if (path.equals("/build")) {
-            populateButton(request, button);
+            PaymentButton button = createButton(request);
             RequestDispatcher disp = request.getRequestDispatcher("/button.jsp");
             disp.forward(request, response);
         } else if (path.equals("/return")) {
@@ -72,8 +71,12 @@ public class ControllerServlet extends HttpServlet {
         return attrs;
     }
 
-    private void populateButton(HttpServletRequest request, PaymentButton button) {
+    private PaymentButton createButton(HttpServletRequest request)
+            throws IOException {
         String base = baseURL(request);
+        PaymentService service = getService();
+        PaymentButton button = service.createButton();
+        request.setAttribute("button", button);
         button.setReturnUrl(base + "/return");
         button.setCancelUrl(base + "/cancel");
         button.setNotifyUrl(base + "/notify");
@@ -93,16 +96,12 @@ public class ControllerServlet extends HttpServlet {
         button.setCity(request.getParameter("city"));
         button.setState(request.getParameter("state"));
         button.setCountry(request.getParameter("country"));
+        return button;
     }
 
     private PaymentService getService() throws IOException {
         ServletContext context = getServletContext();
         return (PaymentService)context.getAttribute("service");
-    }
-
-    private PaymentButton getButton(HttpServletRequest request) {
-        HttpSession session = request.getSession();
-        return (PaymentButton)session.getAttribute("button");
     }
 
     private String baseURL(HttpServletRequest request) {

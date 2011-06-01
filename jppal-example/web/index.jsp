@@ -14,7 +14,7 @@
             <dl>
                 <c:forTokens var="prop" delims=";" items="language;label;customerId;itemCode;itemLabel;price;currency;email;firstName;lastName;address1;address2;zip;city;state;country">
                     <dt>${prop}</dt>
-                    <dd><input type="text" name="${prop}" value="${button[prop]}"></dd>
+                    <dd><input type="text" name="${prop}" value=""></dd>
                 </c:forTokens>
                 <dd><input type="submit" name="submit" value="OK"></dd>
             </dl>

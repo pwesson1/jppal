@@ -4,10 +4,6 @@
         <description>ServletContextListener</description>
         <listener-class>org.tastefuljava.jppal.example.ContextListener</listener-class>
     </listener>
-    <listener>
-        <description>HttpSessionListener</description>
-        <listener-class>org.tastefuljava.jppal.example.SessionListener</listener-class>
-    </listener>
     <servlet>
         <servlet-name>ButtonBuilderServlet</servlet-name>
         <servlet-class>org.tastefuljava.jppal.example.ControllerServlet</servlet-class>

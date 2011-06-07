@@ -208,14 +208,17 @@ public class PaymentService {
         }
     }
 
-    public void processNotification(Map<String,String> attrs)
+    public void processNotification(Map<String,String[]> attrs)
             throws IOException {
         StringBuilder buf = new StringBuilder("cmd=_notify-validate");
-        for (Map.Entry<String,String> entry: attrs.entrySet()) {
-            buf.append('&');
-            buf.append(entry.getKey());
-            buf.append('=');
-            buf.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
+        for (Map.Entry<String,String[]> entry: attrs.entrySet()) {
+            String name = entry.getKey();
+            for (String value: entry.getValue()) {
+                buf.append('&');
+                buf.append(name);
+                buf.append('=');
+                buf.append(URLEncoder.encode(value, "UTF-8"));
+            }
         }
         byte[] content = buf.toString().getBytes("UTF-8");
         URL uploadUrl = new URL(baseURL + PDT_PATH);

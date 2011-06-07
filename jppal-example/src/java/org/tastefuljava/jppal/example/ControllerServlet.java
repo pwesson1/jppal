@@ -26,8 +26,10 @@ public class ControllerServlet extends HttpServlet {
             RequestDispatcher disp = request.getRequestDispatcher("/button.jsp");
             disp.forward(request, response);
         } else if (path.equals("/return")) {
-            Map<String,String> attrs = getParameters(request);
-            request.setAttribute("payment", attrs);
+            String tx = request.getParameter("tx");
+            PaymentService service = getService();
+            Map<String,String> payment = service.getPaymentInfo(tx);
+            request.setAttribute("payment", payment);
             RequestDispatcher disp = request.getRequestDispatcher("/return.jsp");
             disp.forward(request, response);
         } else if (path.equals("/cancel")) {
@@ -36,9 +38,8 @@ public class ControllerServlet extends HttpServlet {
             RequestDispatcher disp = request.getRequestDispatcher("/cancel.jsp");
             disp.forward(request, response);
         } else if (path.equals("/notify")) {
-            Map<String,String> attrs = getParameters(request);
             PaymentService service = getService();
-            service.processNotification(attrs);
+            service.processNotification(request.getParameterMap());
         }
     }
 

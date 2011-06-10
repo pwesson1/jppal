@@ -79,6 +79,9 @@
                 <include name="jppal.jar"/>
                 <include name="lib/**"/>
             </zipfileset>
+            <zipfileset dir="." prefix="minica-${minica-version}">
+                <include name="LICENSE.txt"/>
+            </zipfileset>
         </zip>
     </target>
 

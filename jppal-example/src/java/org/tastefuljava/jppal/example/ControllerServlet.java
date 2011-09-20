@@ -39,7 +39,9 @@ public class ControllerServlet extends HttpServlet {
             disp.forward(request, response);
         } else if (path.equals("/notify")) {
             PaymentService service = getService();
-            service.processNotification(request.getParameterMap());
+            @SuppressWarnings("unchecked")
+            Map<String,String[]> parms = request.getParameterMap();
+            service.processNotification(parms);
         }
     }
 

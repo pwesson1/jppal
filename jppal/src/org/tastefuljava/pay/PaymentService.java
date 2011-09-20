@@ -33,6 +33,7 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
+import org.bouncycastle.cms.CMSAlgorithm;
 import org.bouncycastle.cms.CMSEnvelopedData;
 import org.bouncycastle.cms.CMSEnvelopedDataGenerator;
 import org.bouncycastle.cms.CMSException;
@@ -40,6 +41,7 @@ import org.bouncycastle.cms.CMSProcessableByteArray;
 import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.cms.CMSSignedDataGenerator;
 import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder;
+import org.bouncycastle.cms.jcajce.JceCMSContentEncryptorBuilder;
 import org.bouncycastle.cms.jcajce.JceKeyTransRecipientInfoGenerator;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
@@ -303,7 +305,7 @@ public class PaymentService {
             CMSProcessableByteArray cmsba = new CMSProcessableByteArray(data);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             cmsba.write(baos);
-            CMSSignedData signedData = sg.generate(cmsba, true, "BC");
+            CMSSignedData signedData = sg.generate(cmsba, true);
             byte[] signed = signedData.getEncoded();
             CMSEnvelopedDataGenerator eg = new CMSEnvelopedDataGenerator();
             JceKeyTransRecipientInfoGenerator trig
@@ -312,7 +314,8 @@ public class PaymentService {
             eg.addRecipientInfoGenerator(trig);
             CMSEnvelopedData envData = eg.generate(
                     new CMSProcessableByteArray(signed),
-                    CMSEnvelopedDataGenerator.DES_EDE3_CBC, "BC");
+                    new JceCMSContentEncryptorBuilder(CMSAlgorithm.DES_EDE3_CBC)
+                                              .setProvider("BC").build());
             byte[] bytes = envData.getEncoded();
             String encoded = new String(Base64.encode(bytes), "ASCII");
             return "-----BEGIN PKCS7-----" + encoded + "-----END PKCS7-----";

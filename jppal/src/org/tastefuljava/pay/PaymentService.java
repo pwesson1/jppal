@@ -57,7 +57,6 @@ public class PaymentService {
             = Logger.getLogger(PaymentService.class.getName());
     private static final Map<String,String> PAYPAL_LANGUAGES;
     private static final String PDT_PATH = "/cgi-bin/webscr";
-    private static final String IPN_PATH = "/cgi-bin/webscr";
     private static final Pattern CONTENT_TYPE_PATTERN
             = Pattern.compile("^[a-zA-Z_0-9+-]+/[a-zA-Z_0-9+-]+\\s*"
                 + "(?:;\\s*charset=([a-zA-Z_0-9+-]+))$");

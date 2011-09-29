@@ -1,3 +1,20 @@
+/*
+    jppal, a Paypal button generator in Java
+    Copyright (C) 2011  Maurice Perry <maurice@perry.ch>
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package org.tastefuljava.pay;
 
 import java.io.BufferedReader;
@@ -6,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -29,8 +47,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.VelocityEngine;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.bouncycastle.cms.CMSAlgorithm;
@@ -259,26 +275,28 @@ public class PaymentService {
         }
     }
 
-    void renderButton(PaymentButton button, Writer out) {
+    void renderButton(PaymentButton button, Writer writer) {
         try {
             String encrypted = encrypt(button);
-            VelocityContext context = new VelocityContext();
-            context.put("button", button);
-            context.put("baseURL", baseURL);
-            context.put("encrypted", encrypted);
-            VelocityEngine engine = new VelocityEngine();
-            engine.setProperty("resource.loader", "classpath");
-            engine.setProperty("classpath.resource.loader.class",
-                    "org.apache.velocity.runtime.resource.loader."
-                    + "ClasspathResourceLoader");
-            engine.init();
-            engine.mergeTemplate(
-                    getPackagePath() + "/button.vm", "UTF-8", context, out);
+            PrintWriter out = new PrintWriter(writer);
+            try {
+                out.println("<form action='" + baseURL
+                        + "/cgi-bin/webscr' method='post'>");
+                out.println("<input type='hidden' name='cmd'"
+                        + " value='_s-xclick'>");
+                out.println("<input type='submit' name='submit'"
+                        + " value='" + button.getLabel() + "'>");
+                out.println("<input type='hidden' name='encrypted'"
+                        + " value='" + encrypted + "'>");
+                out.println("</form>");
+            } finally {
+                out.close();
+            }
         } catch (RuntimeException e) {
+            LOG.log(Level.SEVERE, "Error rendering button", e);
             throw e;
-        } catch (IOException e) {
-            throw new RuntimeException(e.getMessage());
         } catch (Exception e) {
+            LOG.log(Level.SEVERE, "Error rendering button", e);
             throw new RuntimeException(e.getMessage());
         }
     }
